@@ -1,0 +1,13 @@
+{
+    "name": "pidennis/wp-local-dev",
+    "description": "WordPress MU Plugin to replace existing urls with the current host in dev environments.",
+    "type": "devaloka-muplugin",
+    "license": "proprietary",
+    "extra": {
+        "installer-loader": "wp-local-dev.php"
+    },
+    "require": {
+        "php": ">=7.0",
+        "devaloka/mu-plugin-installer": "~0.2.0"
+    }
+}
