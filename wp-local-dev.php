@@ -24,7 +24,7 @@ if ( defined( 'WP_LOCAL_DEV' ) && WP_LOCAL_DEV ) {
             // Remember the original domain
             self::$originalDomain = parse_url( home_url( '/' ), PHP_URL_HOST );
 
-            $hooks = array( 'post_link', 'site_url', 'home_url', 'admin_url', 'plugins_url', 'content_url', 'stylesheet_directory_uri' );
+            $hooks = array( 'post_link', 'site_url', 'home_url', 'admin_url', 'plugins_url', 'content_url', 'stylesheet_directory_uri', 'wp_redirect' );
             foreach ( $hooks as $hook ) {
                 add_filter( $hook, array( $this, 'rewriteUrl' ), 99, 1 );
             }
