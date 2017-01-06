@@ -1,7 +1,13 @@
 <?php
 /**
- * Define WP_LOCAL_DEV as true to rewrite all existing links to the current host.
- * Drop this file to /mu-plugins/.
+ * Plugin Name: WP Local Dev
+ * Description: Rewrites all links to the current host, if WP_LOCAL_DEV is defined as true.
+ * Version: 1.0.2
+ * Author: piDennis
+ * Author URI: https://github.com/pidennis/
+ * Plugin URI: https://github.com/pidennis/wp-local-dev
+ *
+ * Copy this file to wp-content/mu-plugins/ or install via composer.
  */
 
 if ( defined( 'WP_LOCAL_DEV' ) && WP_LOCAL_DEV ) {
