@@ -8,7 +8,10 @@ if ( defined( 'WP_LOCAL_DEV' ) && WP_LOCAL_DEV ) {
 
     final class PILocalDevFilter
     {
-        private static $originalDomain;
+        /**
+         * The original Host this WordPress instance is configured for.
+         */
+        private static $originalHost;
 
         public function __construct() { }
 
@@ -17,12 +20,12 @@ if ( defined( 'WP_LOCAL_DEV' ) && WP_LOCAL_DEV ) {
          */
         public function init()
         {
-            if ( ! empty( self::$originalDomain ) ) {
+            if ( ! empty( self::$originalHost ) ) {
                 return;
             }
 
-            // Remember the original domain
-            self::$originalDomain = parse_url( home_url( '/' ), PHP_URL_HOST );
+            // Remember the original host
+            self::$originalHost = parse_url( home_url( '/' ), PHP_URL_HOST );
 
             $hooks = array( 'post_link', 'site_url', 'home_url', 'admin_url', 'includes_url', 'plugins_url', 'content_url', 'stylesheet_directory_uri', 'wp_redirect' );
             foreach ( $hooks as $hook ) {
@@ -73,7 +76,7 @@ if ( defined( 'WP_LOCAL_DEV' ) && WP_LOCAL_DEV ) {
          */
         public function filterContent( $content )
         {
-            return preg_replace( '#(href="https?://' . self::$originalDomain . ')#i', 'href="' . $this->getHome(), $content );
+            return preg_replace( '#(href="https?://' . self::$originalHost . ')#i', 'href="' . $this->getHome(), $content );
         }
 
         /**
