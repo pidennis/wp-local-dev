@@ -27,10 +27,12 @@ if ( defined( 'WP_LOCAL_DEV' ) && WP_LOCAL_DEV ) {
             // Remember the original host
             self::$originalHost = parse_url( home_url( '/' ), PHP_URL_HOST );
 
-            $hooks = array( 'post_link', 'site_url', 'home_url', 'admin_url', 'includes_url', 'plugins_url', 'content_url', 'stylesheet_directory_uri', 'wp_redirect' );
+            $hooks = array( 'post_link', 'site_url', 'home_url', 'admin_url', 'includes_url', 'plugins_url', 'content_url', 'stylesheet_directory_uri' );
             foreach ( $hooks as $hook ) {
-                add_filter( $hook, array( $this, 'rewriteUrl' ), 99, 1 );
+                add_filter( $hook, array( $this, 'rewriteAllUrls' ), 99, 1 );
             }
+
+            add_filter( 'wp_redirect', array( $this, 'rewriteInternalUrls' ) );
 
             add_filter( 'pre_option_home', array( $this, 'getHome' ) );
             add_filter( 'pre_option_siteurl', array( $this, 'getHome' ) );
@@ -46,10 +48,29 @@ if ( defined( 'WP_LOCAL_DEV' ) && WP_LOCAL_DEV ) {
          * @param string $url The URL to rewrite.
          * @return string The rewritten URL.
          */
-        public function rewriteUrl( $url )
+        public function rewriteAllUrls( $url )
         {
             $host = parse_url( $url, PHP_URL_HOST );
             if ( empty( $host ) ) {
+                return $url;
+            }
+
+            // Replace host with local host
+            $url = str_replace( $host, $_SERVER['HTTP_HOST'], $url );
+
+            // Force http on localhost
+            return set_url_scheme( $url, 'http' );
+        }
+
+        /**
+         * Replaces the host in the specified URL if it points to the host configured as home_url in this WordPress instance.
+         * @param string $url The URL to rewrite.
+         * @return string The URL.
+         */
+        public function rewriteInternalUrls( $url )
+        {
+            $host = parse_url( $url, PHP_URL_HOST );
+            if ( $host !== self::$originalHost ) {
                 return $url;
             }
 
