@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WP Local Dev
  * Description: Rewrites all links to the current host, if WP_LOCAL_DEV is defined as true.
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: piDennis
  * Author URI: https://github.com/pidennis/
  * Plugin URI: https://github.com/pidennis/wp-local-dev
@@ -33,15 +33,12 @@ if ( defined( 'WP_LOCAL_DEV' ) && WP_LOCAL_DEV ) {
             // Remember the original host
             self::$originalHost = parse_url( home_url( '/' ), PHP_URL_HOST );
 
-            $hooks = array( 'post_link', 'site_url', 'home_url', 'admin_url', 'includes_url', 'plugins_url', 'content_url', 'stylesheet_directory_uri' );
+            $hooks = array( 'post_link', 'site_url', 'home_url', 'plugins_url', 'content_url', 'pre_option_home', 'pre_option_siteurl' );
             foreach ( $hooks as $hook ) {
                 add_filter( $hook, array( $this, 'rewriteAllUrls' ), 99, 1 );
             }
 
             add_filter( 'wp_redirect', array( $this, 'rewriteInternalUrls' ) );
-
-            add_filter( 'pre_option_home', array( $this, 'getHome' ) );
-            add_filter( 'pre_option_siteurl', array( $this, 'getHome' ) );
 
             add_filter( 'the_content', array( $this, 'filterContent' ) );
             add_filter( 'term_description', array( $this, 'filterContent' ) );
@@ -88,22 +85,13 @@ if ( defined( 'WP_LOCAL_DEV' ) && WP_LOCAL_DEV ) {
         }
 
         /**
-         * Returns the URL to our local homepage.
-         * @return string The current URL to our local homepage.
-         */
-        public function getHome()
-        {
-            return set_url_scheme( '//' . $_SERVER['HTTP_HOST'], 'http' );
-        }
-
-        /**
          * Replaces all links to our original domain with links to our local host.
          * @param string $content The content to filter.
          * @return string The filtered content.
          */
         public function filterContent( $content )
         {
-            return preg_replace( '#(href="https?://' . self::$originalHost . ')#i', 'href="' . $this->getHome(), $content );
+            return preg_replace( '#(href="https?://' . self::$originalHost . ')#i', 'href="' . home_url( '/' ), $content );
         }
 
         /**
