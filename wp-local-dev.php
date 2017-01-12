@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WP Local Dev
  * Description: Rewrites all links to the current host, if WP_LOCAL_DEV is defined as true.
- * Version: 1.0.3
+ * Version: 1.0.4
  * Author: piDennis
  * Author URI: https://github.com/pidennis/
  * Plugin URI: https://github.com/pidennis/wp-local-dev
@@ -12,7 +12,7 @@
 
 if ( defined( 'WP_LOCAL_DEV' ) && WP_LOCAL_DEV ) {
 
-    final class PILocalDevFilter
+    final class WPLocalDevFilter
     {
         /**
          * The original Host this WordPress instance is configured for.
@@ -31,11 +31,11 @@ if ( defined( 'WP_LOCAL_DEV' ) && WP_LOCAL_DEV ) {
             }
 
             // Remember the original host
-            self::$originalHost = parse_url( home_url( '/' ), PHP_URL_HOST );
+            self::$originalHost = parse_url( get_option( 'home' ), PHP_URL_HOST );
 
-            $hooks = array( 'post_link', 'site_url', 'home_url', 'plugins_url', 'content_url', 'pre_option_home', 'pre_option_siteurl' );
+            $hooks = array( 'post_link', 'site_url', 'home_url', 'plugins_url', 'content_url', 'option_home', 'option_siteurl' );
             foreach ( $hooks as $hook ) {
-                add_filter( $hook, array( $this, 'rewriteAllUrls' ), 99, 1 );
+                add_filter( $hook, array( $this, 'replaceHost' ), 99 );
             }
 
             add_filter( 'wp_redirect', array( $this, 'rewriteInternalUrls' ) );
@@ -47,21 +47,19 @@ if ( defined( 'WP_LOCAL_DEV' ) && WP_LOCAL_DEV ) {
         }
 
         /**
-         * Replaces the host of the specified URL with our current host.
-         * @param string $url The URL to rewrite.
-         * @return string The rewritten URL.
+         * Replaces the host of the specified url with the current HTTP_HOST.
+         * @param $url The URL with the host to replace.
+         * @return string The url with a replaced host name.
          */
-        public function rewriteAllUrls( $url )
+        public function replaceHost( $url )
         {
+            // Get the host of the url
             $host = parse_url( $url, PHP_URL_HOST );
-            if ( empty( $host ) ) {
-                return $url;
-            }
 
-            // Replace host with local host
+            // Replace the host with the current HTTP_HOST
             $url = str_replace( $host, $_SERVER['HTTP_HOST'], $url );
 
-            // Force http on localhost
+            // Always force http on localhost
             return set_url_scheme( $url, 'http' );
         }
 
@@ -72,16 +70,11 @@ if ( defined( 'WP_LOCAL_DEV' ) && WP_LOCAL_DEV ) {
          */
         public function rewriteInternalUrls( $url )
         {
-            $host = parse_url( $url, PHP_URL_HOST );
-            if ( $host !== self::$originalHost ) {
+            if ( parse_url( $url, PHP_URL_HOST ) !== self::$originalHost ) {
                 return $url;
             }
 
-            // Replace host with local host
-            $url = str_replace( $host, $_SERVER['HTTP_HOST'], $url );
-
-            // Force http on localhost
-            return set_url_scheme( $url, 'http' );
+            return $this->replaceHost( $url );
         }
 
         /**
@@ -91,20 +84,20 @@ if ( defined( 'WP_LOCAL_DEV' ) && WP_LOCAL_DEV ) {
          */
         public function filterContent( $content )
         {
-            return preg_replace( '#(href="https?://' . self::$originalHost . ')#i', 'href="' . home_url( '/' ), $content );
+            return preg_replace( '#(href="https?://' . self::$originalHost . ')#i', 'href="' . get_option( 'home' ), $content );
         }
 
         /**
          * Replaces the domain in WP_Site.
          * @param WP_Site $site The site to filter.
-         * @return WP_Site The filtered site object.
+         * @return WP_Site The site object with a rewritten domain.
          */
         public function onGetSite( WP_Site $site )
         {
-            $site->domain = $this->rewriteUrl( $site->domain );
+            $site->domain = $this->replaceHost( $site->domain );
             return $site;
         }
     }
 
-    ( new PILocalDevFilter() )->init();
+    ( new WPLocalDevFilter() )->init();
 }
