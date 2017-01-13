@@ -4,7 +4,7 @@
     "type": "devaloka-muplugin",
     "license": "proprietary",
     "extra": {
-        "installer-loader": "wp-local-dev.php"
+        "installer-loader": "loader/wp-local-dev-loader.php"
     },
     "require": {
         "php": ">=7.0",
